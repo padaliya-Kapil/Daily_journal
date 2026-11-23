@@ -9,11 +9,14 @@ const SHEET_NAME = 'Journal';
 const HEADERS = ['Date', 'Entry', 'Created', 'Updated'];
 const MAX_CHARS = 786;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+// App icon (browser tab + phone home-screen shortcut), pinned to a commit so it never changes.
+const ICON_URL = 'https://raw.githubusercontent.com/padaliya-Kapil/Daily_journal/7aeb5f5898af8b002852d69a1bc9c349003dc25b/icons/icon-512.png';
 
 /** Web app entry point. */
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('Index')
     .setTitle('Micro Journal')
+    .setFaviconUrl(ICON_URL)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
 }
 
