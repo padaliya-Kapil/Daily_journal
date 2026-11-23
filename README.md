@@ -12,13 +12,14 @@ See [SPEC.md](SPEC.md) for the full design.
 |---|---|
 | `src/Code.gs` | Apps Script backend: reads and writes the `Journal` tab |
 | `src/Index.html` | The whole app (layout, styles, logic) |
-| `src/appsscript.json` | Optional manifest: India timezone, minimal permissions, "only me" access |
+| `src/appsscript.json` | Optional manifest: time zone, minimal permissions, "only me" access |
 
 ## Set it up (about 5 minutes)
 
 1. **Create the Sheet.** Go to [sheets.new](https://sheets.new) and name it
-   e.g. *Micro Journal*. In **File → Settings**, set the time zone to
-   *(GMT+05:30) India Standard Time*.
+   e.g. *Micro Journal*. In **File → Settings**, set the time zone to your
+   own, e.g. *(GMT-05:00) Eastern Time - Toronto* or *(GMT-08:00) Pacific Time -
+   Vancouver*. This controls how the Created/Updated timestamps are shown.
 2. **Open Apps Script.** In the Sheet: **Extensions → Apps Script**.
 3. **Add the backend.** Replace everything in `Code.gs` with the contents of
    [`src/Code.gs`](src/Code.gs). Save.
@@ -27,7 +28,10 @@ See [SPEC.md](SPEC.md) for the full design.
 5. *(Optional, recommended)* **Project Settings ⚙ → tick "Show
    appsscript.json manifest file in editor"**, then paste
    [`src/appsscript.json`](src/appsscript.json) into it. This limits the
-   script to *this one spreadsheet* only.
+   script to *this one spreadsheet* only. It's set to `America/Toronto`; if
+   you're in another Canadian zone, change `timeZone` to e.g.
+   `America/Vancouver`, `America/Edmonton`, `America/Winnipeg`,
+   `America/Halifax` or `America/St_Johns`.
 6. **Deploy.** **Deploy → New deployment → ⚙ Select type → Web app**
    - Execute as: **Me**
    - Who has access: **Only myself**
@@ -53,7 +57,8 @@ Version: New version → Deploy**. The URL stays the same.
 
 - **One entry per day.** Saving again today updates today's row.
 - **786 characters max**, single line (Enter saves; line breaks become spaces).
-- **Day changes at midnight** on your device's clock.
+- **Day changes at midnight** on your device's clock, wherever you are
+  (travel included). The Sheet's time zone doesn't affect which day you're writing for.
 - **Strict streak.** Miss a day and the diya streak starts again from zero.
 - **Mala milestones** at 7 → 21 → 51 → 108 days, then every 108 after.
 - **Rangoli:** one dot per day of the month; a full month blooms with petals.
