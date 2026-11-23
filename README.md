@@ -13,6 +13,8 @@ See [SPEC.md](SPEC.md) for the full design.
 | `src/Code.gs` | Apps Script backend: reads and writes the `Journal` tab |
 | `src/Index.html` | The whole app (layout, styles, logic) |
 | `src/appsscript.json` | Optional manifest: time zone, minimal permissions, "only me" access |
+| `.github/workflows/deploy.yml` | Auto-deploys `src/` to Apps Script on push to `main` |
+| `icons/` | App icon (diya) |
 
 ## Set it up (about 5 minutes)
 
@@ -54,8 +56,59 @@ You must be signed into the same Google account in that browser.
 
 ### Updating after code changes
 
-Paste the new code, then **Deploy → Manage deployments → ✏️ Edit →
-Version: New version → Deploy**. The URL stays the same.
+Set up **automatic deploys** once (below) and every change merged into `main`
+goes live by itself. Without it: paste the new code, then **Deploy → Manage
+deployments → ✏️ Edit → Version: New version → Deploy**.
+
+## Automatic deploys (GitHub Actions)
+
+`.github/workflows/deploy.yml` uses Google's `clasp` tool to upload `src/` to
+your Apps Script project and update your existing web app deployment, so
+the link on your phone never changes. It runs on every push to `main` that
+touches `src/`, or by hand from the **Actions** tab (**Run workflow**).
+
+One-time setup (on your laptop):
+
+1. **Turn on the Apps Script API:** open
+   <https://script.google.com/home/usersettings> and switch
+   **Google Apps Script API** to **On**.
+2. **Log in with clasp.** Install [Node.js](https://nodejs.org) (LTS), then in
+   a terminal run:
+   ```
+   npx @google/clasp@3.4.1 login
+   ```
+   A browser window opens; sign in with the Google account that owns the
+   journal Sheet and click **Allow**. This creates a file called `.clasprc.json`
+   in your home folder (`C:\Users\<you>\.clasprc.json` on Windows,
+   `~/.clasprc.json` on Mac).
+3. **Find two IDs** in the Apps Script editor:
+   - **Script ID:** ⚙ **Project Settings → IDs → Script ID**.
+   - **Deployment ID:** **Deploy → Manage deployments**, select your web app,
+     and copy its **Deployment ID** (starts with `AKfycb…`).
+4. **Add three secrets** to the GitHub repo: **Settings → Secrets and
+   variables → Actions → New repository secret**:
+
+   | Name | Value |
+   |---|---|
+   | `CLASPRC_JSON` | the entire contents of `.clasprc.json` |
+   | `SCRIPT_ID` | the Script ID |
+   | `DEPLOYMENT_ID` | the Deployment ID |
+
+5. **Name the main branch `main`.** On GitHub: **Settings → General → Default
+   branch** (or **Branches**), click the ✏️ rename icon, and rename it to `main`.
+6. **Test it:** **Actions → Deploy to Apps Script → Run workflow**. A green
+   tick means your web app has been updated.
+
+Notes:
+- The first automatic deploy also uploads `src/appsscript.json`. If you
+  skipped that file during manual setup, the app may ask you to **Allow**
+  access once more next time you open it. That's expected.
+- `.clasprc.json` is a login token for your Google account's Apps Script
+  projects. Keep it only in the GitHub secret; never commit it or share it.
+  Secrets are not given to pull requests from forks, and you can revoke the
+  token at any time at <https://myaccount.google.com/permissions>.
+- If a deploy fails with an auth error after months of no use, run
+  `npx @google/clasp@3.4.1 login` again and update the `CLASPRC_JSON` secret.
 
 ## How it behaves
 

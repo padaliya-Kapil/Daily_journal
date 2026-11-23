@@ -1,0 +1,65 @@
+# Publishes src/ to Google Apps Script and updates the existing web app
+# deployment, so the /exec link on your phone stays the same.
+#
+# Needs three repository secrets (Settings → Secrets and variables → Actions):
+#   CLASPRC_JSON   contents of ~/.clasprc.json after `npx @google/clasp login`
+#   SCRIPT_ID      Apps Script → Project Settings → IDs → Script ID
+#   DEPLOYMENT_ID  Apps Script → Deploy → Manage deployments → Deployment ID
+name: Deploy to Apps Script
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: apps-script-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install clasp
+        run: npm install -g @google/clasp@3.4.1
+
+      - name: Configure clasp
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
+          DEPLOYMENT_ID: ${{ secrets.DEPLOYMENT_ID }}
+        run: |
+          for name in CLASPRC_JSON SCRIPT_ID DEPLOYMENT_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing repository secret $name. See README → Automatic deploys."
+              exit 1
+            fi
+          done
+          umask 077
+          printf '%s' "$CLASPRC_JSON" > ~/.clasprc.json
+          printf '{"scriptId":"%s","rootDir":"src"}\n' "$SCRIPT_ID" > .clasp.json
+
+      - name: Push code
+        run: clasp push --force
+
+      - name: Update web app (same link)
+        env:
+          DEPLOYMENT_ID: ${{ secrets.DEPLOYMENT_ID }}
+        run: clasp update-deployment "$DEPLOYMENT_ID" --description "${GITHUB_SHA::7}"
+
+      - name: Remove credentials
+        if: always()
+        run: rm -f ~/.clasprc.json
