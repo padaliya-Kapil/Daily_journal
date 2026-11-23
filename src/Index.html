@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Micro Journal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6efdf;          /* khadi paper */
+    --surface: #fffaf0;
+    --ink: #1e2a5e;         /* neel */
+    --ink-soft: #5b6491;
+    --line: #e2d6ba;
+    --haldi: #d99a12;       /* turmeric */
+    --haldi-soft: #f6e4b3;
+    --sindoor: #cf3f22;     /* vermilion */
+    --sindoor-soft: #f8d8cd;
+    --shadow: 0 1px 0 rgba(30, 42, 94, .04), 0 10px 28px -16px rgba(30, 42, 94, .25);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1330;        /* indigo night */
+      --surface: #161c42;
+      --ink: #f1e8d4;
+      --ink-soft: #a7add3;
+      --line: #2b3366;
+      --haldi: #f0b733;
+      --haldi-soft: #3a3218;
+      --sindoor: #ff6a48;
+      --sindoor-soft: #3f1f24;
+      --shadow: none;
+      color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Mukta', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 17px;
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .serif { font-family: 'Tiro Devanagari Hindi', Georgia, serif; }
+
+  /* Block-print border */
+  .border {
+    height: 14px;
+    flex: none;
+    background: var(--haldi);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='14'%3E%3Crect width='28' height='1'/%3E%3Crect y='13' width='28' height='1'/%3E%3Cpath d='M14 3l4 4-4 4-4-4z'/%3E%3Ccircle cx='2' cy='7' r='1.5'/%3E%3Ccircle cx='26' cy='7' r='1.5'/%3E%3C/svg%3E") repeat-x center / 28px 14px;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='14'%3E%3Crect width='28' height='1'/%3E%3Crect y='13' width='28' height='1'/%3E%3Cpath d='M14 3l4 4-4 4-4-4z'/%3E%3Ccircle cx='2' cy='7' r='1.5'/%3E%3Ccircle cx='26' cy='7' r='1.5'/%3E%3C/svg%3E") repeat-x center / 28px 14px;
+    opacity: .85;
+  }
+
+  main {
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 28px 16px 32px;
+    flex: 1;
+  }
+
+  /* Header */
+  .weekday {
+    margin: 0;
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  h1 {
+    margin: 2px 0 18px;
+    font-size: clamp(1.8rem, 7vw, 2.3rem);
+    font-weight: 400;
+    line-height: 1.15;
+  }
+
+  /* Streak */
+  .streak { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .diya { width: 54px; height: 54px; flex: none; }
+  .diya .bowl { fill: var(--ink); }
+  .diya .oil { fill: var(--haldi); }
+  .diya .fire { fill: var(--haldi); }
+  .diya .flame { transform-origin: 32px 30px; transform: scale(0); transition: transform .5s cubic-bezier(.3, 1.6, .5, 1); }
+  .diya .core { fill: var(--sindoor); }
+  .diya .glow { fill: var(--haldi); opacity: 0; transition: opacity .5s; }
+  .diya .wick { stroke: var(--ink-soft); stroke-width: 1.5; stroke-linecap: round; }
+  .diya.lit .flame { transform: scale(1); animation: flicker 2.4s ease-in-out infinite .5s; }
+  .diya.lit .glow { opacity: .18; }
+  @keyframes flicker {
+    0%, 100% { transform: scale(1) rotate(0); }
+    30% { transform: scale(.94, 1.04) rotate(-2deg); }
+    60% { transform: scale(1.03, .97) rotate(2deg); }
+  }
+  .streak-num { font-size: 2rem; line-height: 1; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .streak-label { font-size: .95rem; color: var(--ink-soft); line-height: 1.3; }
+  .streak-label b { color: var(--ink); font-weight: 600; }
+
+  /* Entry card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+  }
+  .entry { padding: 14px 16px 12px; transition: border-color .2s; }
+  .entry:focus-within { border-color: var(--haldi); }
+  textarea {
+    display: block;
+    width: 100%;
+    min-height: 56px;
+    border: 0;
+    outline: 0;
+    resize: none;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: 1.12rem;
+    line-height: 1.5;
+    padding: 0;
+    overflow: hidden;
+  }
+  textarea::placeholder { color: var(--ink-soft); opacity: .7; }
+  .entry-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; }
+  .count { font-size: .85rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .count.near { color: var(--haldi); }
+  .count.full { color: var(--sindoor); font-weight: 600; }
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: 0;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .save {
+    background: var(--ink);
+    color: var(--bg);
+    font-weight: 600;
+    padding: 9px 22px;
+    border-radius: 999px;
+    min-height: 44px;
+    transition: opacity .2s, transform .1s;
+  }
+  .save:active { transform: scale(.97); }
+  .save:disabled { opacity: .35; cursor: default; transform: none; }
+  .save:focus-visible, .nav:focus-visible { outline: 2px solid var(--haldi); outline-offset: 2px; }
+
+  .status { min-height: 1.5em; margin: 8px 4px 0; font-size: .92rem; color: var(--ink-soft); }
+  .status.ok { color: var(--haldi); font-weight: 600; }
+  .status.error { color: var(--sindoor); }
+  .status button { background: none; color: inherit; text-decoration: underline; padding: 0; margin-left: 4px; }
+
+  /* Milestone */
+  .milestone {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: var(--sindoor-soft);
+    color: var(--sindoor);
+    text-align: center;
+    font-size: 1.05rem;
+  }
+  .milestone.pop { animation: pop .6s cubic-bezier(.3, 1.6, .5, 1); }
+  @keyframes pop { from { transform: scale(.9); opacity: 0; } }
+
+  /* One year ago */
+  .ago { margin-top: 14px; padding: 12px 16px; border-left: 3px solid var(--haldi); border-radius: 4px 14px 14px 4px; }
+  .ago-label { font-size: .78rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
+  .ago p { margin: 2px 0 0; font-style: italic; }
+
+  /* Mala + Rangoli */
+  .twin { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 22px; }
+  .panel { padding: 14px 10px 12px; text-align: center; min-width: 0; }
+  .panel h2 {
+    margin: 0 0 6px;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .panel svg { display: block; width: 100%; max-width: 170px; margin: 0 auto; aspect-ratio: 1; }
+  .panel .cap { font-size: .85rem; color: var(--ink-soft); margin-top: 6px; line-height: 1.3; }
+  .thread { fill: none; stroke: var(--line); stroke-width: 1; }
+  .bead { fill: var(--surface); stroke: var(--line); stroke-width: 1; transition: fill .3s; }
+  .bead.on { fill: var(--haldi); stroke: var(--haldi); }
+  .guru { fill: var(--sindoor); }
+  .tassel { stroke: var(--sindoor); stroke-width: 1.5; stroke-linecap: round; }
+  .mala-num { fill: var(--ink); font-size: 26px; font-weight: 600; font-family: 'Mukta', sans-serif; }
+  .mala-of { fill: var(--ink-soft); font-size: 11px; font-family: 'Mukta', sans-serif; }
+
+  .rnav { display: flex; align-items: center; justify-content: space-between; margin: -2px 0 2px; }
+  .rnav span { font-size: .85rem; font-weight: 500; }
+  .nav {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: transparent; color: var(--ink); font-size: 1.1rem; line-height: 1;
+  }
+  .nav:disabled { opacity: .2; cursor: default; }
+  .guide { fill: none; stroke: var(--line); stroke-width: .8; stroke-dasharray: 2 3; }
+  .dot { stroke-width: 1.2; transition: fill .3s; }
+  .dot.r0 { fill: var(--sindoor); stroke: var(--sindoor); }
+  .dot.r1 { fill: var(--haldi); stroke: var(--haldi); }
+  .dot.r2 { fill: var(--ink); stroke: var(--ink); }
+  .dot.r3 { fill: var(--sindoor); stroke: var(--sindoor); }
+  .dot.missed { fill: none; stroke: var(--line); }
+  .dot.future { fill: var(--line); stroke: none; opacity: .6; }
+  .dot.today { fill: none; stroke: var(--haldi); stroke-dasharray: 2 2; stroke-width: 1.5; }
+  .dot.extra { fill: var(--line); stroke: none; }
+  .petal { fill: var(--haldi); opacity: .85; }
+
+  /* Recent */
+  .recent { margin-top: 26px; }
+  .recent h2 {
+    margin: 0 0 4px;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .recent ul { list-style: none; margin: 0; padding: 0; }
+  .recent li { padding: 10px 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: 74px 1fr; gap: 10px; }
+  .recent li:first-child { border-top: 0; }
+  .recent time { font-size: .85rem; color: var(--ink-soft); padding-top: 2px; }
+  .recent p { margin: 0; overflow-wrap: anywhere; }
+  .empty { color: var(--ink-soft); font-style: italic; padding: 8px 0; }
+
+  footer { text-align: center; font-size: .8rem; color: var(--ink-soft); padding: 0 16px 16px; }
+  footer .preview { color: var(--sindoor); }
+
+  [hidden] { display: none !important; }
+
+  @media (max-width: 360px) {
+    .twin { gap: 8px; }
+    .panel { padding: 12px 6px 10px; }
+  }
+  @media (min-width: 700px) {
+    main { padding-top: 48px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="border" aria-hidden="true"></div>
+
+<main>
+  <header>
+    <p class="weekday" id="weekday">&nbsp;</p>
+    <h1 class="serif" id="date">&nbsp;</h1>
+  </header>
+
+  <section class="streak" aria-live="polite">
+    <svg class="diya" id="diya" viewBox="0 0 64 64" aria-hidden="true">
+      <circle class="glow" cx="32" cy="26" r="22"/>
+      <g class="flame">
+        <path class="fire" d="M32 8c5 7 8 12 8 17a8 8 0 0 1-16 0c0-5 3-10 8-17z"/>
+        <path class="core" d="M32 18c2.2 3 3.4 5.4 3.4 7.6a3.4 3.4 0 0 1-6.8 0c0-2.2 1.2-4.6 3.4-7.6z" opacity=".55"/>
+      </g>
+      <line class="wick" x1="32" y1="33" x2="32" y2="37"/>
+      <path class="bowl" d="M6 38h52c0 10-11.6 17-26 17S6 48 6 38z"/>
+      <path class="oil" d="M12 38h40c-1.2 3-8.8 5-20 5s-18.8-2-20-5z" opacity=".7"/>
+      <path class="bowl" d="M56 38l6-3-2 6z"/>
+    </svg>
+    <div>
+      <div class="streak-num" id="streakNum">0</div>
+      <div class="streak-label" id="streakLabel">&nbsp;</div>
+    </div>
+  </section>
+
+  <form class="card entry" id="form" autocomplete="off">
+    <textarea id="text" rows="2" maxlength="786" enterkeyhint="done"
+      placeholder="One line about today…" aria-label="Today’s journal line"></textarea>
+    <div class="entry-foot">
+      <span class="count" id="count">0 / 786</span>
+      <button type="submit" class="save" id="save" disabled>Save</button>
+    </div>
+  </form>
+  <div class="status" id="status" role="status" aria-live="polite"></div>
+
+  <div class="milestone serif" id="milestone" hidden></div>
+
+  <div class="card ago" id="ago" hidden>
+    <div class="ago-label" id="agoLabel">One year ago</div>
+    <p class="serif" id="agoText"></p>
+  </div>
+
+  <div class="twin">
+    <section class="card panel" aria-labelledby="malaTitle">
+      <h2 id="malaTitle">Mala</h2>
+      <svg id="mala" viewBox="0 0 120 120" role="img" aria-label="Milestone progress"></svg>
+      <div class="cap" id="malaCap">&nbsp;</div>
+    </section>
+    <section class="card panel" aria-labelledby="rangoliTitle">
+      <h2 id="rangoliTitle">Rangoli</h2>
+      <div class="rnav">
+        <button type="button" class="nav" id="prevMonth" aria-label="Previous month">‹</button>
+        <span id="monthName">&nbsp;</span>
+        <button type="button" class="nav" id="nextMonth" aria-label="Next month">›</button>
+      </div>
+      <svg id="rangoli" viewBox="-62 -62 124 124" role="img" aria-label="Days written this month"></svg>
+      <div class="cap" id="rangoliCap">&nbsp;</div>
+    </section>
+  </div>
+
+  <section class="recent">
+    <h2>Recent</h2>
+    <ul id="recent"></ul>
+  </section>
+</main>
+
+<footer>
+  <span id="footNote">Your words live in your own Google Sheet.</span>
+</footer>
+<div class="border" aria-hidden="true"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var MAX = 786;
+  var MILESTONES = [7, 21, 51, 108];
+  var DAY = 86400000;
+
+  function $(id) { return document.getElementById(id); }
+  var ta = $('text'), saveBtn = $('save'), statusEl = $('status');
+
+  var state = {
+    byDate: new Map(),   // 'yyyy-MM-dd' -> text
+    todayKey: '',
+    view: null,          // {y, m} month shown in rangoli
+    loaded: false,
+    saving: false
+  };
+
+  /* ---------- Dates (keys are local calendar days, math done in UTC) ---------- */
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function localKey(d) { d = d || new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function parts(k) { var p = k.split('-'); return { y: +p[0], m: +p[1], d: +p[2] }; }
+  function keyMs(k) { var p = parts(k); return Date.UTC(p.y, p.m - 1, p.d); }
+  function msKey(ms) { var d = new Date(ms); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()); }
+  function addDays(k, n) { return msKey(keyMs(k) + n * DAY); }
+  function fmt(k, opts) {
+    opts.timeZone = 'UTC';
+    return new Intl.DateTimeFormat('en-IN', opts).format(new Date(keyMs(k)));
+  }
+  function daysInMonth(y, m) { return new Date(Date.UTC(y, m, 0)).getUTCDate(); }
+  function monthKey(y, m, d) { return y + '-' + pad(m) + '-' + pad(d); }
+
+  /* ---------- Backend: Apps Script, or a local preview stand-in ---------- */
+  var hasGAS = !!(window.google && google.script && google.script.run);
+
+  function call(fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    if (hasGAS) {
+      return new Promise(function (resolve, reject) {
+        var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+        r[fn].apply(r, args);
+      });
+    }
+    return new Promise(function (resolve) { setTimeout(resolve, 250); })
+      .then(function () { return preview[fn].apply(preview, args); });
+  }
+
+  var PREVIEW_KEY = 'micro-journal-preview';
+  var preview = {
+    load: function () { try { return JSON.parse(localStorage.getItem(PREVIEW_KEY) || '{}'); } catch (e) { return {}; } },
+    getEntries: function () {
+      var o = this.load();
+      return Object.keys(o).sort().reverse().map(function (d) { return { date: d, text: o[d] }; });
+    },
+    saveEntry: function (date, text) {
+      var o = this.load();
+      o[date] = normalize(text);
+      try { localStorage.setItem(PREVIEW_KEY, JSON.stringify(o)); } catch (e) {}
+      return this.getEntries();
+    }
+  };
+
+  /* ---------- Streak & milestones ---------- */
+  function currentStreak() {
+    var k = state.byDate.has(state.todayKey) ? state.todayKey : addDays(state.todayKey, -1);
+    var n = 0;
+    while (state.byDate.has(k)) { n++; k = addDays(k, -1); }
+    return n;
+  }
+  function bestStreak() {
+    var keys = Array.from(state.byDate.keys()).filter(function (k) { return k <= state.todayKey; }).sort();
+    var best = 0, run = 0, prev = null;
+    keys.forEach(function (k) {
+      run = (prev && addDays(prev, 1) === k) ? run + 1 : 1;
+      if (run > best) best = run;
+      prev = k;
+    });
+    return best;
+  }
+  function nextTarget(s) {
+    for (var i = 0; i < MILESTONES.length; i++) if (s < MILESTONES[i]) return MILESTONES[i];
+    return (Math.floor(s / 108) + 1) * 108;
+  }
+  function isMilestone(s) { return MILESTONES.indexOf(s) !== -1 || (s > 108 && s % 108 === 0); }
+  function milestoneText(s) {
+    if (s === 7) return 'Seven days. A small diya, steadily lit.';
+    if (s === 21) return 'Twenty-one days. It’s a habit now.';
+    if (s === 51) return 'Fifty-one days. Shubh — keep going.';
+    if (s === 108) return '108 days. A full mala. 🙏';
+    return s + ' days. Another full mala. 🙏';
+  }
+
+  /* ---------- Rendering ---------- */
+  function normalize(t) { return String(t || '').replace(/\s+/g, ' ').trim(); }
+  function savedToday() { return state.byDate.get(state.todayKey) || ''; }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function renderHeader() {
+    $('weekday').textContent = fmt(state.todayKey, { weekday: 'long' });
+    $('date').textContent = fmt(state.todayKey, { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  function renderStreak() {
+    var s = currentStreak();
+    var lit = state.byDate.has(state.todayKey);
+    $('diya').classList.toggle('lit', lit);
+    $('streakNum').textContent = s;
+    var best = bestStreak();
+    var label;
+    if (!state.loaded) label = '&nbsp;';
+    else if (lit) label = 'day streak' + (best > s ? ' · best <b>' + best + '</b>' : s > 1 ? ' · your best yet' : '');
+    else if (s > 0) label = 'Write today to keep your <b>' + s + '-day</b> streak';
+    else label = 'Light the diya — write today’s line';
+    $('streakLabel').innerHTML = label;
+  }
+
+  function renderMilestone(celebrate) {
+    var s = currentStreak(), el = $('milestone');
+    var show = state.byDate.has(state.todayKey) && isMilestone(s);
+    el.hidden = !show;
+    if (show) {
+      el.textContent = milestoneText(s);
+      if (celebrate) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+    }
+  }
+
+  function renderMala() {
+    var s = currentStreak();
+    var target = nextTarget(s);
+    var n = Math.min(target, 108);
+    var filled = target > 108 ? s - (target - 108) : s;
+    var R = 46, cx = 60, cy = 58;
+    var br = Math.min(5, Math.PI * R / (n + 1) * 0.62);
+    var out = '<circle class="thread" cx="' + cx + '" cy="' + cy + '" r="' + R + '"/>';
+    for (var i = 0; i < n; i++) {
+      // start beside the guru bead (bottom) and go clockwise
+      var a = Math.PI / 2 + (i + 1) / (n + 1) * Math.PI * 2;
+      var x = cx + R * Math.cos(a), y = cy + R * Math.sin(a);
+      out += '<circle class="bead' + (i < filled ? ' on' : '') + '" cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="' + br.toFixed(2) + '"/>';
+    }
+    out += '<line class="tassel" x1="60" y1="' + (cy + R + 4) + '" x2="60" y2="' + (cy + R + 13) + '"/>';
+    out += '<circle class="guru" cx="60" cy="' + (cy + R) + '" r="' + Math.max(br * 1.4, 3.2).toFixed(2) + '"/>';
+    out += '<text class="mala-num" x="60" y="' + (cy + 6) + '" text-anchor="middle">' + s + '</text>';
+    out += '<text class="mala-of" x="60" y="' + (cy + 21) + '" text-anchor="middle">of ' + target + '</text>';
+    $('mala').innerHTML = out;
+    var left = target - s;
+    $('malaCap').textContent = left + (left === 1 ? ' day' : ' days') + ' to ' + target;
+  }
+
+  // 31 positions: centre, then rings of 6, 12 and 12 — like a simple dot rangoli.
+  var POS = (function () {
+    var p = [{ x: 0, y: 0, r: 5.5, ring: 0 }];
+    function ring(count, radius, offset, r, idx) {
+      for (var i = 0; i < count; i++) {
+        var a = (-90 + offset + i * 360 / count) * Math.PI / 180;
+        p.push({ x: radius * Math.cos(a), y: radius * Math.sin(a), r: r, ring: idx });
+      }
+    }
+    ring(6, 17, 0, 4.6, 1);
+    ring(12, 33, 0, 4.2, 2);
+    ring(12, 49, 15, 4.2, 3);
+    return p;
+  })();
+
+  function renderRangoli() {
+    var v = state.view, t = parts(state.todayKey);
+    var dim = daysInMonth(v.y, v.m);
+    var isCurrent = v.y === t.y && v.m === t.m;
+    var out = '<circle class="guide" r="17"/><circle class="guide" r="33"/><circle class="guide" r="49"/>';
+    var written = 0, elapsed = 0;
+    for (var d = 1; d <= 31; d++) {
+      var p = POS[d - 1];
+      var cls, r = p.r;
+      if (d > dim) { cls = 'extra'; r = 1.4; }
+      else {
+        var k = monthKey(v.y, v.m, d);
+        if (state.byDate.has(k)) { cls = 'r' + p.ring; written++; }
+        else if (k === state.todayKey) cls = 'today';
+        else if (k > state.todayKey) { cls = 'future'; r = p.r * 0.45; }
+        else cls = 'missed';
+        if (k <= state.todayKey) elapsed++;
+      }
+      out += '<circle class="dot ' + cls + '" cx="' + p.x.toFixed(2) + '" cy="' + p.y.toFixed(2) + '" r="' + r.toFixed(2) + '"><title>' + d + '</title></circle>';
+    }
+    if (written === dim) {
+      for (var i = 0; i < 24; i++) {
+        out += '<ellipse class="petal" rx="1.8" ry="4" transform="rotate(' + (i * 15) + ') translate(0 -57.5)"/>';
+      }
+    }
+    $('rangoli').innerHTML = out;
+    $('monthName').textContent = fmt(monthKey(v.y, v.m, 1), { month: 'short', year: 'numeric' });
+    var total = isCurrent ? elapsed : (keyMs(monthKey(v.y, v.m, 1)) > keyMs(state.todayKey) ? 0 : dim);
+    $('rangoliCap').textContent = written === dim ? 'Complete! ✨' : written + ' of ' + total + ' days';
+
+    var first = earliestMonth();
+    $('prevMonth').disabled = v.y * 12 + v.m <= first.y * 12 + first.m;
+    $('nextMonth').disabled = v.y * 12 + v.m >= t.y * 12 + t.m;
+  }
+  function earliestMonth() {
+    var keys = Array.from(state.byDate.keys()).sort();
+    var k = keys.length && keys[0] < state.todayKey ? keys[0] : state.todayKey;
+    var p = parts(k);
+    return { y: p.y, m: p.m };
+  }
+
+  function renderAgo() {
+    var t = parts(state.todayKey);
+    var k = (t.m === 2 && t.d === 29) ? null : monthKey(t.y - 1, t.m, t.d);
+    var text = k && state.byDate.get(k);
+    $('ago').hidden = !text;
+    if (text) {
+      $('agoLabel').textContent = 'One year ago · ' + fmt(k, { day: 'numeric', month: 'short', year: 'numeric' });
+      $('agoText').textContent = text;
+    }
+  }
+
+  function renderRecent() {
+    var keys = Array.from(state.byDate.keys())
+      .filter(function (k) { return k < state.todayKey; })
+      .sort().reverse().slice(0, 7);
+    if (!keys.length) {
+      $('recent').innerHTML = '<li class="empty" style="display:block">' +
+        (state.loaded ? 'Your past lines will gather here.' : 'Opening your journal…') + '</li>';
+      return;
+    }
+    $('recent').innerHTML = keys.map(function (k) {
+      return '<li><time datetime="' + k + '">' + esc(fmt(k, { weekday: 'short', day: 'numeric', month: 'short' })) +
+        '</time><p>' + esc(state.byDate.get(k)) + '</p></li>';
+    }).join('');
+  }
+
+  function renderStats(celebrate) {
+    renderStreak();
+    renderMilestone(celebrate);
+    renderMala();
+    renderRangoli();
+    renderAgo();
+    renderRecent();
+  }
+
+  /* ---------- Entry box ---------- */
+  function autoGrow() {
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  }
+  function updateEntryUI() {
+    var len = ta.value.length;
+    var c = $('count');
+    c.textContent = len + ' / ' + MAX;
+    c.className = 'count' + (len >= MAX ? ' full' : len > MAX - 86 ? ' near' : '');
+    var text = normalize(ta.value);
+    var saved = savedToday();
+    saveBtn.textContent = state.saving ? 'Saving…' : saved ? 'Update' : 'Save';
+    saveBtn.disabled = !state.loaded || state.saving || !text || text === saved;
+    autoGrow();
+  }
+
+  function setStatus(msg, kind, retry) {
+    statusEl.className = 'status' + (kind ? ' ' + kind : '');
+    statusEl.textContent = msg || '';
+    if (retry) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = 'Try again';
+      b.onclick = retry;
+      statusEl.appendChild(b);
+    }
+  }
+
+  function setEntries(list) {
+    state.byDate = new Map();
+    (list || []).forEach(function (e) { state.byDate.set(e.date, e.text); });
+  }
+
+  function errMsg(e) { return (e && e.message) ? e.message : String(e || 'Something went wrong.'); }
+
+  function save() {
+    var text = normalize(ta.value);
+    if (!state.loaded || state.saving || !text || text === savedToday()) return;
+    var wasLit = state.byDate.has(state.todayKey);
+    state.saving = true;
+    setStatus('');
+    updateEntryUI();
+    call('saveEntry', state.todayKey, text)
+      .then(function (list) {
+        setEntries(list);
+        ta.value = savedToday();
+        setStatus(wasLit ? 'Updated ✓' : 'Saved ✓ The diya is lit.', 'ok');
+        renderStats(!wasLit);
+      })
+      .catch(function (e) { setStatus('Couldn’t save: ' + errMsg(e), 'error', save); })
+      .then(function () { state.saving = false; updateEntryUI(); });
+  }
+
+  function load() {
+    setStatus('');
+    return call('getEntries')
+      .then(function (list) {
+        setEntries(list);
+        state.loaded = true;
+        if (!normalize(ta.value)) ta.value = savedToday();
+        renderStats(false);
+        updateEntryUI();
+      })
+      .catch(function (e) {
+        setStatus('Couldn’t open your journal: ' + errMsg(e), 'error', load);
+        renderRecent();
+      });
+  }
+
+  function setToday() {
+    state.todayKey = localKey();
+    var t = parts(state.todayKey);
+    state.view = { y: t.y, m: t.m };
+    renderHeader();
+  }
+
+  /* ---------- Events ---------- */
+  $('form').addEventListener('submit', function (e) { e.preventDefault(); save(); });
+  ta.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
+      e.preventDefault();
+      save();
+    }
+  });
+  ta.addEventListener('input', function () {
+    if (/\n/.test(ta.value)) ta.value = ta.value.replace(/\n+/g, ' ');
+    if (statusEl.classList.contains('ok')) setStatus('');
+    updateEntryUI();
+  });
+  $('prevMonth').addEventListener('click', function () {
+    var v = state.view; state.view = v.m === 1 ? { y: v.y - 1, m: 12 } : { y: v.y, m: v.m - 1 };
+    renderRangoli();
+  });
+  $('nextMonth').addEventListener('click', function () {
+    var v = state.view; state.view = v.m === 12 ? { y: v.y + 1, m: 1 } : { y: v.y, m: v.m + 1 };
+    renderRangoli();
+  });
+  window.addEventListener('resize', autoGrow);
+
+  // Roll over at local midnight (or when coming back to an old tab).
+  function checkNewDay() {
+    if (localKey() === state.todayKey) return;
+    setToday();
+    ta.value = '';
+    setStatus('');
+    renderStats(false);
+    updateEntryUI();
+    load();
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) checkNewDay(); });
+  setInterval(checkNewDay, 60000);
+
+  /* ---------- Start ---------- */
+  if (!hasGAS) {
+    $('footNote').innerHTML = '<span class="preview">Preview mode</span> · entries are saved in this browser only.';
+  }
+  setToday();
+  renderStats(false);
+  updateEntryUI();
+  load().then(function () { if (window.innerWidth > 700 && !savedToday()) ta.focus(); });
+})();
+</script>
+</body>
+</html>

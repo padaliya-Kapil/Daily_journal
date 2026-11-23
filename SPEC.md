@@ -28,7 +28,7 @@ Single sheet tab named `Journal`. Created automatically on first run if missing.
 | Column | Name    | Type      | Notes                                  |
 |--------|---------|-----------|----------------------------------------|
 | A      | Date    | Date      | `yyyy-MM-dd`, one row per day (unique)  |
-| B      | Entry   | Text      | Up to 786 words                        |
+| B      | Entry   | Text      | Up to 786 characters, single line      |
 | C      | Created | Date-time | First save                             |
 | D      | Updated | Date-time | Last save                              |
 
@@ -49,7 +49,7 @@ Rules:
 1. **Today's entry**
    - Date header (e.g. `Monday · 23 Nov 2026`).
    - Single text field, auto-grows; save via button or Ctrl/Cmd+Enter.
-   - Limit: **786 words**, with a quiet live word counter (`120 / 786`).
+   - Limit: **786 characters**, with a quiet live counter (`120 / 786`). Enter saves.
    - If today is already written: show it, editable, button reads "Update".
    - States: Saving… → Saved ✓ (haldi accent) / error with retry.
 2. **Diya streak** 🪔
@@ -88,8 +88,9 @@ Rules:
 - Multiple entries per day, backfill of missed days, Hindi UI, offline mode,
   multi-user sign-in, notifications/reminders.
 
-## 8. Open questions
+## 8. Decisions log
 
-- 786 **words** confirmed? (That's ~1–2 pages; 786 **characters** would be
-  ~3–4 sentences and closer to "micro".)
+- Limit is 786 **characters** (not words). Line breaks are collapsed to spaces.
+- Streak is strict: no grace days.
+- Dates in column A are stored as plain text `yyyy-MM-dd` to avoid timezone drift.
 - Possible v2: daily reminder email via Apps Script time trigger.
