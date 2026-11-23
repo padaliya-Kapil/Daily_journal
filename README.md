@@ -16,6 +16,10 @@ See [SPEC.md](SPEC.md) for the full design.
 
 ## Set it up (about 5 minutes)
 
+> **Do the setup on a laptop or desktop browser.** The Google Sheets phone app
+> has no **Extensions** menu, so Apps Script can't be opened from it. After
+> setup, you use the journal from your phone through its web link.
+
 1. **Create the Sheet.** Go to [sheets.new](https://sheets.new) and name it
    e.g. *Micro Journal*. In **File → Settings**, set the time zone to your
    own, e.g. *(GMT-05:00) Eastern Time - Toronto* or *(GMT-08:00) Pacific Time -
